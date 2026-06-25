@@ -1,1 +1,306 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Smart Money Live Tracker</title>
+<style>
+  :root{
+    --bg:#0a0e0f; --panel:#0e1416; --panel2:#101a1c;
+    --line:#1c2a2d; --line2:#16f0c733;
+    --txt:#cfeae3; --dim:#5f7d78; --label:#7fa89f;
+    --cyan:#16f0c7; --green:#27e08a; --red:#ff5c6c; --amber:#ffcf5c;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--mono);
+    -webkit-font-smoothing:antialiased;letter-spacing:.3px}
+  .wrap{max-width:1500px;margin:0 auto;padding:22px 26px 60px}
+
+  /* Header */
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:34px;height:34px;border-radius:8px;background:
+    conic-gradient(from 45deg,var(--cyan),#0bd6ff,var(--cyan));
+    transform:rotate(45deg);box-shadow:0 0 18px var(--line2)}
+  .brand h1{font-size:22px;margin:0;font-weight:700;letter-spacing:2px;color:#eafff9}
+  .brand .sub{font-size:12px;color:var(--dim);margin-top:3px}
+  .live{display:flex;align-items:center;gap:8px;border:1px solid var(--line);
+    padding:7px 14px;border-radius:20px;font-size:12px;color:var(--green);letter-spacing:1px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 8px var(--green);animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* Stat cards */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:30px}
+  .stat{background:var(--panel);padding:22px 24px}
+  .stat .k{font-size:11px;color:var(--label);letter-spacing:1.5px;text-transform:uppercase}
+  .stat .v{font-size:30px;font-weight:700;color:var(--cyan);margin:10px 0 6px;
+    text-shadow:0 0 14px var(--line2)}
+  .stat .d{font-size:11px;color:var(--dim)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-bottom:22px}
+  .tab{padding:0 2px 12px;font-size:13px;letter-spacing:1.5px;color:var(--dim);
+    cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase}
+  .tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+  /* Position grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s}
+  .card:hover{border-color:var(--line2)}
+  .card .glow{position:absolute;inset:0;pointer-events:none;opacity:.5}
+  .card.long .glow{background:radial-gradient(120% 60% at 0% 0%,#27e08a14,transparent 60%)}
+  .card.short .glow{background:radial-gradient(120% 60% at 0% 0%,#ff5c6c14,transparent 60%)}
+
+  .crow{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+  .sym{font-size:17px;font-weight:700;color:#eafff9}
+  .badge{font-size:10px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);
+    color:var(--label);letter-spacing:.5px}
+  .badge.long{color:var(--green);border-color:#27e08a55;background:#27e08a11}
+  .badge.short{color:var(--red);border-color:#ff5c6c55;background:#ff5c6c11}
+
+  .pnlrow{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}
+  .pnlrow .lbl{font-size:11px;color:var(--label);text-transform:uppercase;letter-spacing:1px}
+  .pnl{font-size:26px;font-weight:700}
+  .roi{font-size:22px;font-weight:700;text-align:right}
+  .up{color:var(--green);text-shadow:0 0 12px #27e08a44}
+  .down{color:var(--red);text-shadow:0 0 12px #ff5c6c44}
+
+  .kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;font-size:12px}
+  .kv .item .kk{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.8px}
+  .kv .item .vv{color:var(--txt);font-size:13px;margin-top:2px}
+  .mymargin{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);
+    display:flex;justify-content:space-between;align-items:center}
+  .mymargin .lbl{font-size:11px;color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
+  .mymargin .val{font-size:18px;font-weight:700;color:var(--amber)}
+  .close-x{position:absolute;top:14px;right:16px;color:var(--dim);cursor:pointer;
+    font-size:14px;border:1px solid var(--line);border-radius:6px;width:24px;height:24px;
+    display:flex;align-items:center;justify-content:center}
+  .close-x:hover{color:var(--red);border-color:var(--red)}
+
+  .empty{text-align:center;color:var(--dim);padding:80px 0}
+  .empty .box{width:22px;height:22px;border:1.5px solid var(--line);margin:0 auto 18px;
+    border-radius:4px}
+  .empty .s{font-size:12px;color:#3f5a55;margin-top:8px}
+
+  /* Test controls */
+  .controls{margin-top:40px;border-top:1px solid var(--line);padding-top:22px}
+  .controls h3{font-size:12px;color:var(--label);letter-spacing:1.5px;text-transform:uppercase;
+    margin:0 0 16px}
+  .form{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:16px}
+  .fld{display:flex;flex-direction:column;gap:5px}
+  .fld label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px}
+  .fld input,.fld select{background:var(--panel2);border:1px solid var(--line);
+    color:var(--txt);padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:12px;width:110px}
+  .fld input:focus,.fld select:focus{outline:none;border-color:var(--cyan)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap}
+  button.act{background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    padding:10px 16px;border-radius:8px;font-family:var(--mono);font-size:12px;cursor:pointer;
+    letter-spacing:.5px;transition:.15s}
+  button.act:hover{border-color:var(--cyan);color:var(--cyan)}
+  button.act.green:hover{border-color:var(--green);color:var(--green)}
+  button.act.red:hover{border-color:var(--red);color:var(--red)}
+  .status{font-size:11px;color:var(--dim);margin-top:14px}
+  .flash{transition:background .4s;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="brand">
+      <div class="logo"></div>
+      <div>
+        <h1>SMART MONEY LIVE TRACKER</h1>
+        <div class="sub">trades_berserk · Binance Futures USDⓈ-M</div>
+      </div>
+    </div>
+    <div class="live"><span class="dot"></span> CANLI</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="k">Benim Sabit Kasam</div>
+      <div class="v" id="s-capital">$0.00</div>
+      <div class="d">Referans Sermaye</div>
+    </div>
+    <div class="stat">
+      <div class="k">Kullanılan Kasa</div>
+      <div class="v" id="s-used">0.0%</div>
+      <div class="d" id="s-used-d">$0.00 dağıtıldı</div>
+    </div>
+    <div class="stat">
+      <div class="k">Trader Marj Bakiyesi</div>
+      <div class="v" id="s-trader">$0.00</div>
+      <div class="d">Binance Smart Money</div>
+    </div>
+    <div class="stat">
+      <div class="k">Açık Pozisyon</div>
+      <div class="v" id="s-open">0</div>
+      <div class="d" id="s-upd">son güncelleme --:--:--</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="pos">POZİSYONLAR</div>
+    <div class="tab" data-tab="hist">GEÇMİŞ</div>
+  </div>
+
+  <div id="view-pos"><div class="grid" id="grid"></div></div>
+  <div id="view-hist" style="display:none"><div class="grid" id="grid-hist"></div></div>
+
+  <!-- TEST CONTROLS -->
+  <div class="controls">
+    <h3>// Test Konsolu</h3>
+    <div class="form">
+      <div class="fld"><label>Sembol</label><input id="f-sym" value="BTCUSDT"/></div>
+      <div class="fld"><label>Yön</label>
+        <select id="f-side"><option value="LONG">LONG</option><option value="SHORT">SHORT</option></select></div>
+      <div class="fld"><label>Kaldıraç</label><input id="f-lev" type="number" value="50"/></div>
+      <div class="fld"><label>Marj Tipi</label>
+        <select id="f-mt"><option>Cross</option><option>Isolated</option></select></div>
+      <div class="fld"><label>Entry Fiyat</label><input id="f-entry" type="number" placeholder="boş=canlı"/></div>
+      <div class="fld"><label>Trader Kasa %</label><input id="f-pct" type="number" value="1.9" step="0.1"/></div>
+      <div class="fld"><label>Likidasyon</label><input id="f-liq" type="number" placeholder="ops."/></div>
+    </div>
+    <div class="btns">
+      <button class="act green" onclick="openPos()">+ Yeni Poz Aç</button>
+      <button class="act" onclick="updateLast()">↻ Son Pozu Güncelle</button>
+      <button class="act red" onclick="closeLast()">× Son Pozu Kapat</button>
+      <button class="act red" onclick="resetAll()">⟲ Sıfırla</button>
+      <button class="act" onclick="editCapital()">⚙ Sabit Kasayı Ayarla</button>
+    </div>
+    <div class="status" id="status">bağlanıyor...</div>
+  </div>
+</div>
+
+<script>
+let snap = { positions:[], history:[] };
+let lastId = null;
+
+// ---- WebSocket bağlantı ----
+function connect(){
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  const ws = new WebSocket(`${proto}://${location.host}`);
+  ws.onopen = ()=> setStatus("● canlı akış bağlandı");
+  ws.onclose= ()=>{ setStatus("○ bağlantı koptu, yeniden..."); setTimeout(connect,2000); };
+  ws.onmessage = (e)=>{ snap = JSON.parse(e.data); render(); };
+}
+connect();
+
+function setStatus(t){ document.getElementById("status").textContent = t + "  ·  " + new Date().toLocaleTimeString("tr-TR"); }
+const fmt = (n)=> "$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtP= (n)=> (n>=0?"+":"")+Number(n).toFixed(2)+"%";
+const fmtPrice=(n)=> Number(n).toLocaleString("en-US",{maximumFractionDigits:6});
+
+function render(){
+  document.getElementById("s-capital").textContent = fmt(snap.fixedCapital||0);
+  document.getElementById("s-used").textContent = (snap.usedPct||0).toFixed(1)+"%";
+  document.getElementById("s-used-d").textContent = fmt(snap.usedMargin||0)+" dağıtıldı";
+  document.getElementById("s-trader").textContent = fmt(snap.traderMarginBalance||0);
+  document.getElementById("s-open").textContent = snap.openCount||0;
+  document.getElementById("s-upd").textContent = "son güncelleme "+new Date(snap.ts).toLocaleTimeString("tr-TR");
+
+  renderGrid("grid", snap.positions, false);
+  renderGrid("grid-hist", snap.history, true);
+}
+
+function renderGrid(id, list, isHist){
+  const el = document.getElementById(id);
+  if(!list || !list.length){
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="box"></div>
+      ${isHist?"Geçmiş işlem yok.":"Açık pozisyon bulunamadı."}
+      <div class="s">${isHist?"Kapanan pozisyonlar burada listelenir.":"Sunucu arka planda izlemeye devam ediyor, yeni pozisyon anında burada belirir."}</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = list.map(p=>{
+    const up = p.myPnlUsd >= 0;
+    const cls = p.side==="LONG"?"long":"short";
+    return `<div class="card ${cls}">
+      <div class="glow"></div>
+      ${isHist?"":`<div class="close-x" onclick="closePos(${p.id})">×</div>`}
+      <div class="crow">
+        <span class="sym">${p.symbol}</span>
+        <span class="badge ${cls}">${p.side}</span>
+        <span class="badge">${p.marginType}</span>
+        <span class="badge">${p.leverage}x</span>
+        ${isHist?'<span class="badge">KAPANDI</span>':''}
+      </div>
+      <div class="pnlrow">
+        <div>
+          <div class="lbl">Kâr / Zarar (USDT)</div>
+          <div class="pnl ${up?'up':'down'}">${up?'+':''}${fmt(p.myPnlUsd).replace('$','$')}</div>
+        </div>
+        <div>
+          <div class="lbl" style="text-align:right">ROI</div>
+          <div class="roi ${up?'up':'down'}">${fmtP(p.myRoiPct)}</div>
+        </div>
+      </div>
+      <div class="kv">
+        <div class="item"><div class="kk">Giriş Fiyatı</div><div class="vv">${fmtPrice(p.entryPrice)}</div></div>
+        <div class="item"><div class="kk">Mark Fiyatı</div><div class="vv">${fmtPrice(p.markPrice)}</div></div>
+        <div class="item"><div class="kk">Likidasyon</div><div class="vv">${p.liqPrice?fmtPrice(p.liqPrice):'—'}</div></div>
+        <div class="item"><div class="kk">Trader Kasa %</div><div class="vv">%${(p.traderMarginPct*100).toFixed(2)}</div></div>
+      </div>
+      <div class="mymargin">
+        <span class="lbl">Benim Giriş Tutarım</span>
+        <span class="val">${fmt(p.myMargin)}</span>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ---- Tabs ----
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    const isPos = t.dataset.tab==="pos";
+    document.getElementById("view-pos").style.display = isPos?"":"none";
+    document.getElementById("view-hist").style.display = isPos?"none":"";
+  };
+});
+
+// ---- Test API çağrıları ----
+async function api(url, method="POST", body){
+  const r = await fetch(url,{method,headers:{"Content-Type":"application/json"},
+    body: body?JSON.stringify(body):undefined});
+  return r.json();
+}
+async function openPos(){
+  const body = {
+    symbol: f("f-sym"), side: f("f-side"),
+    leverage: +f("f-lev"), marginType: f("f-mt"),
+    entryPrice: f("f-entry")? +f("f-entry"):undefined,
+    traderMarginPct: +f("f-pct"),
+    liqPrice: f("f-liq")? +f("f-liq"):undefined,
+  };
+  const res = await api("/api/positions","POST",body);
+  if(res.position) lastId = res.position.id;
+}
+async function updateLast(){
+  if(!lastId) return alert("Önce poz aç");
+  await api("/api/positions/"+lastId,"PATCH",{
+    leverage:+f("f-lev"), traderMarginPct:+f("f-pct"),
+    entryPrice: f("f-entry")? +f("f-entry"):undefined,
+    liqPrice: f("f-liq")? +f("f-liq"):undefined, side:f("f-side"),
+  });
+}
+async function closeLast(){ if(lastId){ await closePos(lastId); lastId=null; } }
+async function closePos(id){ await api("/api/positions/"+id,"DELETE"); }
+async function resetAll(){ if(confirm("Tüm pozisyonlar ve geçmiş silinsin mi?")) await api("/api/reset"); }
+async function editCapital(){
+  const c = prompt("Benim Sabit Kasam ($):", snap.fixedCapital);
+  const t = prompt("Trader Marj Bakiyesi ($):", snap.traderMarginBalance);
+  await api("/api/config","POST",{fixedCapital:+c, traderMarginBalance:+t});
+}
+function f(id){ return document.getElementById(id).value.trim(); }
+</script>
+</body>
+</html>
 
