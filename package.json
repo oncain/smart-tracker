@@ -1,0 +1,11 @@
+{
+  "name": "smart-money-live-tracker",
+  "version": "1.0.0",
+  "description": "Binance Smart Money trader takip + benim kasama oranlı canlı PnL",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  }
+}
